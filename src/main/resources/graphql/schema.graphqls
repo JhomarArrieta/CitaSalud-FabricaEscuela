@@ -1,0 +1,11 @@
+type Mutation {
+    login(email: String!, contrasena: String!): AuthResponse
+}
+
+type AuthResponse {
+    token: String!
+}
+
+type Query {
+    _dummy: String
+}
