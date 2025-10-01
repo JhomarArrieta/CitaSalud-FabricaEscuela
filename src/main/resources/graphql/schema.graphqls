@@ -1,5 +1,8 @@
 type Mutation {
     login(email: String!, contrasena: String!): AuthResponse
+
+    # Nueva mutación del agendamiento
+    agendarExamen(input: AgendamientoInput!): CitaExamen!
 }
 
 type AuthResponse {
@@ -8,4 +11,44 @@ type AuthResponse {
 
 type Query {
     _dummy: String
+
+    # Nuevas queries del agendamiento
+    fechasDisponibles: [String!]!
+    sedesDisponibles(fecha: String!): [Sede!]!
+    tiposExamenDisponibles(fecha: String!, sedeId: Int!): [TipoExamen!]!
+    examenesDisponibles(fecha: String!, sedeId: Int!, tipoExamenId: Int!): [Examen!]!
+}
+
+# Nuevos tipos del agendamiento
+type Sede {
+    id: ID!
+    nombre: String
+    direccion: String
+}
+
+type TipoExamen {
+    id: ID!
+    nombre: String
+}
+
+type Examen {
+    id: ID!
+    nombre: String
+    preparacionRequerida: String
+}
+
+type CitaExamen {
+    id: ID!
+    fechaHora: String
+    estado: String
+    examen: Examen
+    sede: Sede
+}
+
+# Nuevo input del agendamiento
+input AgendamientoInput {
+    usuarioId: Int!
+    sedeId: Int!
+    examenId: Int!
+    fechaHora: String!
 }
