@@ -6,6 +6,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "usuario")
@@ -43,8 +45,10 @@ public class Usuario {
     @Column(name = "fecha_nacimiento", nullable = false)
     private LocalDate fechaNacimiento;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "id_rol", nullable = false) //FK
-    private Rol idRol;
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "usuario_rol",
+            joinColumns = @JoinColumn(name = "id_usuario"),
+            inverseJoinColumns = @JoinColumn(name = "id_rol"))
+    private Set<Rol> roles = new HashSet<>();
 
 }

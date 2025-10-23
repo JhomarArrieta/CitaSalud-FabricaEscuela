@@ -1,49 +1,73 @@
 package com.CitaSalud.security;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Value;
 
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
-import java.util.Date;
+import java.security.Key;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 public class JwtTokenProvider {
 
-    /*
     @Value("${app.jwtSecret}")
     private String jwtSecret;
 
     @Value("${app.jwtExpirationInMs}")
-    private int jwtExpirationInMs;
+    private long jwtExpirationMs;
 
-    private final SecretKey key;
+    private Key key;
 
-    public JwtTokenProvider(@Value("${app.jwtSecret}") String jwtSecret) {
-        // Genera la clave SecretKey a partir de la String de forma segura
-        this.key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+    @PostConstruct
+    public void init() {
+        key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }
 
-    public String generateToken(long userId, String rolName) {
+    public String generateToken(Long userId, Set<String> roles) {
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
+        Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
+
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("roles", roles);
 
         return Jwts.builder()
-                .setSubject(Long.toString(userId))              //id del usuario
-                .claim("rol", rolName)                       //Rol en el cuerpo del token
-                .setIssuedAt(now)                               //Hora de emision
-                .setExpiration(expiryDate)                      //hora de expiracion
+                .setSubject(Long.toString(userId))
+                .setClaims(claims)
+                .setIssuedAt(now)
+                .setExpiration(expiryDate)
                 .signWith(key, SignatureAlgorithm.HS512)
                 .compact();
     }
-    */
-    public String generateToken(Long userId, String role) {
-        // Provisional, devuelve un string fijo
-        return "FAKE-TOKEN-USER-" + userId + "-ROLE-" + role;
+
+    public boolean validateToken(String token) {
+        try {
+            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
+            return true;
+        } catch (JwtException | IllegalArgumentException ex) {
+            return false;
+        }
     }
 
+    public Long getUserIdFromToken(String token) {
+        Claims claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
+        return Long.parseLong(claims.getSubject());
+    }
+
+    public Set<String> getRolesFromToken(String token) {
+        Claims claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
+        Object raw = claims.get("roles");
+        if (raw instanceof Collection) {
+            return ((Collection<?>) raw).stream().map(Object::toString).collect(Collectors.toSet());
+        }
+        return Collections.emptySet();
+    }
 }
