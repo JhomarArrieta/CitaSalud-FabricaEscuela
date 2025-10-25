@@ -74,7 +74,7 @@ public class AuthService {
         // Generar token JWT que contendrá el id del usuario y sus roles.
         String token = jwtTokenProvider.generateToken(usuario.getIdUsuario(), roles);
 
-        // Retornar la respuesta de autenticación (actualmente sólo el token).
+        // Retornar la respuesta de autenticación (actualmente solo el token).
         return new AuthResponse(token);
     }
 }

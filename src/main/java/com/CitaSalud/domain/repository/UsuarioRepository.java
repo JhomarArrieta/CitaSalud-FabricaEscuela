@@ -10,11 +10,6 @@ import java.util.Optional;
  *
  * Proporciona operaciones CRUD y utilidades de consulta sobre la tabla "usuario".
  * Extiende {@link JpaRepository} para aprovechar los métodos estándar (save, findById, findAll, delete, etc.).
- *
- * Buenas prácticas:
- * - Mantener aquí consultas derivadas y firmas claras para uso desde la capa de servicio.
- * - Evitar lógica de negocio compleja en el repositorio; delegar a servicios.
- * - Documentar métodos personalizados para que su intención quede explícita.
  */
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 

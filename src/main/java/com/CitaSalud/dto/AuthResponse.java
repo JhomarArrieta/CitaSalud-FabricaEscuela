@@ -7,10 +7,6 @@ package com.CitaSalud.dto;
  * exitoso. Este objeto se mantiene intencionalmente simple (solo token) para evitar
  * exponer información sensible; se puede extender en el futuro para incluir:
  * - idUsuario, roles, expiración, tipo de token, etc.
- *
- * Buenas prácticas:
- * - Transportar siempre el token sobre canales seguros (HTTPS).
- * - No incluir en este DTO datos sensibles adicionales ni contraseñas.
  */
 public class AuthResponse {
 

@@ -25,7 +25,6 @@ import java.util.stream.Collectors;
  *
  * Notas de seguridad y diseño:
  * - El secreto debe tener la longitud adecuada para el algoritmo de firma seleccionado (HS512).
- *   Se recomienda almacenar el secreto en un store seguro (vault, variables de entorno protegidas, etc.).
  * - Este componente no gestiona revocación de tokens; para revocación considerar lista negra o
  *   control por versión de credenciales en la base de datos.
  * - Se usan Claims personalizados ("roles") para incluir los roles del usuario dentro del token.

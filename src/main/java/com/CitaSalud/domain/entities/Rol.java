@@ -14,8 +14,6 @@ import lombok.Setter;
  *
  * Observaciones:
  * - Lombok (@Getter, @Setter) se usa para evitar boilerplate de getters/setters.
- * - No se implementan equals/hashCode/ToString explícitos; si se requieren comparaciones por valor,
- *   considerar implementarlos según la política de la entidad (usar id nullable con precaución).
  */
 @Entity
 @Table(name = "rol")

@@ -11,8 +11,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
  * - save, findById, findAll, delete, count, existsById, etc.
  *
  * Buenas prácticas y observaciones:
- * - Definir aquí consultas derivadas o métodos personalizados si se requieren búsquedas
- *   por atributos del rol (p. ej. findByNombreRol).
  * - No es necesario anotar con @Repository: Spring Data lo detecta automáticamente.
  * - Mantener las firmas de métodos específicas y documentarlas para evitar ambigüedad en la capa de servicio.
  */

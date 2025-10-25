@@ -27,8 +27,6 @@ import java.util.stream.Collectors;
  * - Este filtro no consulta la base de datos para construir un UserDetails completo;
  *   utiliza la información contenida en el token (userId y roles). Si se requiere
  *   información adicional del usuario, se puede cargar desde {@link CustomUserDetailsService}.
- * - El uso del id del usuario como principal es intencional; puede reemplazarse por
- *   un objeto UserDetails si la aplicación lo necesita.
  */
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
