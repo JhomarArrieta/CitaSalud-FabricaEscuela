@@ -1,11 +1,25 @@
+# Mutaciones del esquema GraphQL.
+# - Las operaciones que modifican estado o realizan autenticación se colocan aquí.
+# - Recomendación de seguridad: transmitir siempre credenciales sobre HTTPS/TLS.
 type Mutation {
+    # Autentica un usuario con email y contraseña.
+    # Parámetros:
+    #  - email: correo electrónico del usuario (identificador).
+    #  - contrasena: contraseña en texto plano enviada desde el cliente (debe viajar por TLS).
+    # Retorna un AuthResponse que contiene el token JWT si la autenticación es exitosa.
     login(email: String!, contrasena: String!): AuthResponse
 }
 
+# DTO de respuesta para operaciones de autenticación.
+# - Mantener intencionalmente mínimo para no exponer datos sensibles.
+# - token: JWT firmado por el servidor; usar para autorizar solicitudes subsiguientes.
 type AuthResponse {
     token: String!
 }
 
+# Consultas públicas / placeholders.
+# - _dummy se mantiene para compatibilidad con herramientas/validaciones que requieren al menos
+#   una consulta definida. Puede eliminarse o reemplazarse por consultas reales del dominio.
 type Query {
     _dummy: String
 }
