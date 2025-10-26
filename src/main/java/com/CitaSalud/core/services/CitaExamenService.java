@@ -7,6 +7,8 @@ import com.CitaSalud.domain.repository.ExamenRepository;
 import com.CitaSalud.domain.repository.SedeRepository;
 import com.CitaSalud.dto.AgendamientoDTO;
 import com.CitaSalud.domain.repository.UsuarioRepository;
+import com.CitaSalud.exceptions.CuposAgotadosException;
+import com.CitaSalud.exceptions.RecursoNoEncontradoException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.CitaSalud.domain.entities.Usuario;
@@ -33,42 +35,29 @@ public class CitaExamenService {
     @Transactional
     public CitaExamen agendarExamen(AgendamientoDTO dto) {
 
-        // 1. Validar que el usuario existe (es mejor validar esto ANTES de bloquear la BD)
         Usuario usuario = usuarioRepository.findById(dto.getUsuarioId())
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + dto.getUsuarioId()));
-        // En producción: .orElseThrow(() -> new RecursoNoEncontradoException("Usuario..."));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado con ID: " + dto.getUsuarioId()));
 
-
-        // 2. Validar que la disponibilidad existe Y bloquear la fila
-        // Usamos el bloqueo pesimista que definiste en el repositorio
         Disponibilidad disponibilidad = disponibilidadRepository
                 .findAndLockDisponibilidad(
                         dto.getSedeId(),
                         dto.getExamenId(),
-                        dto.getFechaHora().toLocalDate(), // La fecha
-                        dto.getFechaHora().toLocalTime()  // <-- AÑADE ESTO (La hora)
+                        dto.getFechaHora().toLocalDate(),
+                        dto.getFechaHora().toLocalTime()
                 )
-                .orElseThrow(() -> new RuntimeException("No hay cupos disponibles o la disponibilidad no existe."));
-        // En producción: .orElseThrow(() -> new CuposAgotadosException("No hay cupos..."));
+                .orElseThrow(() -> new CuposAgotadosException("No hay cupos disponibles o la disponibilidad no existe."));
 
-        // 3. Incrementar el cupo usando la LÓGICA DE LA ENTIDAD
-        // Esto es mucho más limpio y seguro.
         disponibilidad.ocuparCupo();
 
-        // 4. Persistir el cambio en la disponibilidad
-        // Aunque @Transactional hace "dirty checking", guardar explícitamente es una buena práctica.
-        // El bloqueo pesimista se libera al final de la transacción.
         disponibilidadRepository.save(disponibilidad);
 
-        // 5. Crear la nueva cita
         CitaExamen nuevaCita = new CitaExamen();
         nuevaCita.setUsuario(usuario);
         nuevaCita.setDisponibilidad(disponibilidad);
         nuevaCita.setFechaHora(dto.getFechaHora());
-        nuevaCita.setEstado("AGENDADA"); // El valor por defecto, pero es bueno ser explícito
+        nuevaCita.setEstado("AGENDADA");
 
 
-        // 6. Guardar la cita y devolverla
         return citaExamenRepository.save(nuevaCita);
     }
 
