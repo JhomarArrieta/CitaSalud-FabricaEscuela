@@ -10,18 +10,40 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * Servicio encargado de consultar la disponibilidad de exámenes médicos.
+ * 
+ * Proporciona métodos para obtener información sobre:
+ * - Fechas con disponibilidad de citas
+ * - Sedes disponibles en una fecha específica
+ * - Tipos de exámenes disponibles por fecha y sede
+ * - Exámenes específicos disponibles según filtros
+ * 
+ * Todas las operaciones son de solo lectura y optimizadas con transacciones read-only.
+ * Este servicio es utilizado principalmente por el flujo de agendamiento para mostrar
+ * opciones disponibles al usuario antes de confirmar una cita.
+ */
 @Service
 public class DisponibilidadService {
 
     private final DisponibilidadRepository disponibilidadRepository;
 
+    /**
+     * Constructor con inyección de dependencias.
+     * 
+     * @param disponibilidadRepository repositorio para consultar disponibilidades
+     */
     public DisponibilidadService(DisponibilidadRepository disponibilidadRepository) {
         this.disponibilidadRepository = disponibilidadRepository;
     }
 
     /**
-     * Devuelve una lista de fechas que tienen cupos disponibles a partir de hoy.
-     * Usamos readOnly = true para optimizar consultas que no modifican datos.
+     * Obtiene todas las fechas futuras que tienen al menos un cupo disponible.
+     * 
+     * La consulta filtra desde la fecha actual en adelante y solo incluye
+     * disponibilidades donde existan cupos libres (cuposTotales > cuposOcupados).
+     * 
+     * @return lista de fechas disponibles ordenadas ascendentemente
      */
     @Transactional(readOnly = true)
     public List<LocalDate> getFechasDisponibles() {
@@ -29,7 +51,13 @@ public class DisponibilidadService {
     }
 
     /**
-     * Dado una fecha, devuelve las sedes con disponibilidad.
+     * Obtiene las sedes que tienen disponibilidad en una fecha específica.
+     * 
+     * Filtra las sedes que tienen al menos un examen con cupos disponibles
+     * en la fecha proporcionada.
+     * 
+     * @param fecha fecha para consultar sedes disponibles
+     * @return lista de sedes con disponibilidad en la fecha indicada
      */
     @Transactional(readOnly = true)
     public List<Sede> getSedesDisponibles(LocalDate fecha) {
@@ -37,8 +65,14 @@ public class DisponibilidadService {
     }
 
     /**
-     * Dado una fecha y una sede, devuelve los tipos de examen disponibles.
-     * OJO: Revisa la nota sobre los IDs al final.
+     * Obtiene los tipos de exámenes disponibles para una fecha y sede específicas.
+     * 
+     * Permite al usuario conocer las categorías de exámenes que puede agendar
+     * en una combinación fecha-sede determinada.
+     * 
+     * @param fecha fecha de la cita deseada
+     * @param sedeId identificador de la sede seleccionada
+     * @return lista de tipos de examen con disponibilidad
      */
     @Transactional(readOnly = true)
     public List<TipoExamen> getTiposExamenDisponibles(LocalDate fecha, Long sedeId) {
@@ -46,8 +80,15 @@ public class DisponibilidadService {
     }
 
     /**
-     * Dado fecha, sede y tipo de examen, devuelve los exámenes específicos disponibles.
-     * OJO: Revisa la nota sobre los IDs al final.
+     * Obtiene los exámenes específicos disponibles según fecha, sede y tipo de examen.
+     * 
+     * Último nivel de filtrado antes de agendar. Retorna los exámenes concretos
+     * que el usuario puede seleccionar para su cita.
+     * 
+     * @param fecha fecha de la cita deseada
+     * @param sedeId identificador de la sede seleccionada
+     * @param tipoExamenId identificador del tipo de examen seleccionado
+     * @return lista de exámenes específicos con disponibilidad
      */
     @Transactional(readOnly = true)
     public List<Examen> getExamenesDisponibles(LocalDate fecha, Long sedeId, Long tipoExamenId) {

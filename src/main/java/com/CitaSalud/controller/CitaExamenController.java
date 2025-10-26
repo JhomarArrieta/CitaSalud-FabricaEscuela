@@ -1,19 +1,33 @@
 package com.CitaSalud.controller;
 
 import com.CitaSalud.core.services.CitaExamenService;
-import com.CitaSalud.core.services.DisponibilidadService; // ¡Ahora usamos el servicio correcto!
 import com.CitaSalud.domain.entities.CitaExamen;
 import com.CitaSalud.dto.AgendamientoDTO;
 import com.CitaSalud.dto.AgendamientoInput;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication; // Clase clave
-import org.springframework.security.core.context.SecurityContextHolder; // Clase clave
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 
 import java.time.LocalDateTime;
 
+/**
+ * Controlador GraphQL encargado de las operaciones relacionadas con citas de examen.
+ *
+ * Responsabilidades:
+ * - Exponer la mutación para agendar una cita de examen.
+ * - Extraer el identificador del usuario autenticado desde el contexto de seguridad
+ *   (no confiar en valores enviados por el cliente).
+ * - Convertir y validar el input de GraphQL hacia un DTO de servicio y delegar la
+ *   lógica de negocio al servicio correspondiente.
+ *
+ * Notas de seguridad y diseño:
+ * - El identificador del usuario se obtiene del SecurityContext para evitar suplantación.
+ * - La mutación está protegida con @PreAuthorize para permitir solo usuarios con rol de paciente.
+ * - Evitar lógica de negocio en el controlador; todas las validaciones complejas deben residir en el servicio.
+ */
 @Controller
 public class CitaExamenController {
 
@@ -24,58 +38,71 @@ public class CitaExamenController {
     }
 
     /**
-     * Mutación para agendar un examen.
-     * Requiere que el usuario esté autenticado y tenga el rol 'ROLE_PACIENTE'.
-     * El ID del usuario se extrae del contexto de seguridad, no del input.
+     * Mutación GraphQL para agendar un examen.
+     *
+     * Flujo resumido:
+     * 1. Verificar que el usuario esté autenticado y tenga el rol adecuado.
+     * 2. Obtener el ID del usuario desde el SecurityContext (establecido por el filtro JWT).
+     * 3. Mapear el input de GraphQL a un DTO de servicio, usando el ID seguro del usuario.
+     * 4. Llamar al servicio para realizar el agendamiento y devolver la entidad resultante.
+     *
+     * Autorización:
+     * - @PreAuthorize("hasRole('ROLE_PACIENTE')") restringe el acceso a usuarios con el rol de paciente.
+     *   Nota: según la configuración de Spring Security, hasRole puede esperarse sin el prefijo "ROLE_"
+     *   (ej. hasRole('PACIENTE')). Revisar convenciones del proyecto antes de modificar.
+     *
+     * Manejo del principal:
+     * - El principal puede ser Long o String (dependiendo de cómo lo establezca el filtro JWT).
+     * - El método convierte de forma segura a Long y lanza excepciones claras si el valor no es válido.
+     *
+     * Conversión de fecha:
+     * - Se utiliza LocalDateTime.parse(...) por simplicidad; el input debe estar en formato ISO-8601
+     *   (ej. "2025-10-26T15:30:00"). Manejar parse exceptions en el servicio si se necesita mayor tolerancia.
+     *
+     * @param input datos de agendamiento recibidos desde la mutación GraphQL
+     * @return la entidad CitaExamen creada/actualizada por el servicio
+     * @throws RuntimeException / IllegalArgumentException en caso de usuario no autenticado o ID inválido
      */
     @MutationMapping
-    @PreAuthorize("hasRole('ROLE_PACIENTE')") // ¡Spring Security manejará la autorización basada en los roles del contexto!
+    @PreAuthorize("hasRole('ROLE_PACIENTE')")
     public CitaExamen agendarExamen(
             @Argument AgendamientoInput input
     ) {
 
-        // 1. Obtener la autenticación del contexto de seguridad
-        // La autenticación fue establecida por JwtAuthenticationFilter.
+        // Obtener la autenticación actual desde el contexto de seguridad.
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        // 2. Extraer el ID del usuario del principal
-        // En tu JwtAuthenticationFilter, el principal es el Long userId
+        // Validación básica: asegurar que exista una autenticación válida.
         if (authentication == null || authentication.getPrincipal() == null) {
-            // Esto no debería pasar si @PreAuthorize funciona, pero es una buena práctica de seguridad
-            throw new RuntimeException("Acceso denegado: Usuario no autenticado.");
+            throw new RuntimeException("Acceso denegado: usuario no autenticado.");
         }
 
-        // ¡Casteamos el principal directamente a Long!
-        // Esto funciona porque el filtro lo estableció así:
-        // new UsernamePasswordAuthenticationToken(userId, null, authorities);
+        // Extraer y normalizar el ID del usuario desde el principal.
         Long usuarioId;
         try {
-            // Manejar si el principal se configuró como String (subject del JWT) en lugar de Long
             Object principal = authentication.getPrincipal();
             if (principal instanceof String) {
                 usuarioId = Long.parseLong((String) principal);
             } else if (principal instanceof Long) {
                 usuarioId = (Long) principal;
             } else {
-                throw new IllegalArgumentException("El principal de seguridad no es un ID válido.");
+                // Si el principal es otro tipo, señalamos el problema con claridad.
+                throw new IllegalArgumentException("El principal de seguridad no contiene un ID de usuario válido.");
             }
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("El ID de usuario en el token no es numérico.");
+            throw new IllegalArgumentException("El ID de usuario contenido en el token no es numérico.", e);
         }
 
-
-        // 3. Convertir el Input de GraphQL a nuestro DTO de servicio
+        // Mapear el input de GraphQL al DTO de servicio, asegurando el uso del ID autenticado.
         AgendamientoDTO dto = new AgendamientoDTO();
-
-        // 4. ¡Usamos el ID del usuario autenticado y seguro!
         dto.setUsuarioId(usuarioId);
-
-        // 5. Usamos los datos del input
         dto.setSedeId(input.sedeId());
         dto.setExamenId(input.examenId());
+
+        // Parseo de fecha/hora: requiere formato ISO-8601. Validaciones adicionales deben hacerse en el servicio.
         dto.setFechaHora(LocalDateTime.parse(input.fechaHora()));
 
-        // 6. Llamamos al servicio con el DTO seguro
+        // Delegar la operación al servicio responsable y devolver el resultado.
         return citaExamenService.agendarExamen(dto);
     }
 }

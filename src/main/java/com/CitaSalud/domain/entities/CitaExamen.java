@@ -8,102 +8,110 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 
 /**
- * Entidad JPA que representa una cita de examen agendada por un usuario.
- *
- * Mappea la tabla "cita_examen" y contiene información sobre:
- * - referencia al usuario que agenda la cita,
- * - la disponibilidad (franja/slot) reservada,
- * - fecha y hora de la cita,
- * - estado de la cita y motivo de cancelación (si aplica),
- * - marcas de auditoría (fecha de creación/modificación).
- *
- * Observaciones:
- * - Se usa FetchType.LAZY en relaciones ManyToOne para evitar cargar entidades relacionadas
- *   innecesariamente; acceder a los datos relacionados dentro de una transacción o usar DTOs.
- * - Lombok (@Data) proporciona getters/setters, equals/hashCode y toString;
+ * Entidad JPA que representa una cita médica agendada por un usuario.
+ * 
+ * Mapea la tabla "cita_examen" y almacena información sobre:
+ * - Usuario que agenda la cita
+ * - Disponibilidad (franja horaria) reservada
+ * - Fecha y hora específica de la cita
+ * - Estado actual y motivo de cancelación (si aplica)
+ * - Auditoría de creación y modificación
+ * 
+ * Relaciones:
+ * - ManyToOne con Usuario: múltiples citas pueden pertenecer a un usuario
+ * - ManyToOne con Disponibilidad: múltiples citas pueden compartir una franja horaria
+ * 
+ * Se utiliza FetchType.LAZY en las relaciones para optimizar el rendimiento,
+ * cargando entidades relacionadas solo cuando se acceden explícitamente.
  */
 @Data
 @Entity
 @Table(name = "cita_examen")
 public class CitaExamen {
 
-    /**
-     * Identificador primario de la cita.
-     * Generado automáticamente por la base de datos (IDENTITY).
-     */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_cita")
     private Long idCita;
 
     /**
-     * Usuario que solicita/agenda la cita.
-     * - Relación ManyToOne obligatoria (optional = false).
-     * - FetchType.LAZY: cargar usuario sólo cuando sea necesario.
+     * Usuario que solicita y agenda la cita.
+     * Relación obligatoria con carga diferida.
      */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "id_usuario", nullable = false)
     private Usuario usuario;
 
     /**
-     * Disponibilidad (slot) reservada para la cita.
-     * - Representa la franja horaria / recurso asociado.
+     * Disponibilidad asociada a esta cita.
+     * Representa la franja horaria específica reservada para el examen.
      */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "disponibilidad", nullable = false)
     private Disponibilidad disponibilidad;
 
     /**
-     * Fecha y hora de la cita.
-     * - Campo obligatorio que indica el momento efectivo de la cita.
+     * Fecha y hora exacta en que se realizará el examen.
      */
     @Column(name = "fecha_hora", nullable = false)
     private LocalDateTime fechaHora;
 
     /**
-     * Estado de la cita.
-     * - Valor por defecto: "AGENDADA".
-     * - Estados posibles (AGENDADA, CANCELADA, FINALIZADA).
+     * Estado actual de la cita.
+     * Valores posibles: AGENDADA, CANCELADA, FINALIZADA.
+     * Valor por defecto: AGENDADA.
      */
     @Column(name = "estado", length = 20, nullable = false)
     private String estado = "AGENDADA";
 
     /**
-     * Motivo de cancelación.
-     * - Campo opcional; se debe poblar cuando el estado cambie a "CANCELADA".
-     * - No debe contener información sensible.
+     * Motivo de cancelación de la cita.
+     * Solo debe poblarse cuando el estado cambia a CANCELADA.
      */
     @Column(name = "motivo_cancelacion")
     private String motivoCancelacion;
 
     /**
-     * Marca temporal de creación (audit).
-     * - Se rellena automáticamente al persistir la entidad.
-     * - updatable = false para evitar modificaciones posteriores.
+     * Fecha y hora de creación del registro.
+     * Se establece automáticamente al persistir la entidad.
+     * Campo inmutable (no se actualiza en modificaciones posteriores).
      */
     @CreationTimestamp
     @Column(name = "fecha_creacion", updatable = false)
     private LocalDateTime fechaCreacion;
 
     /**
-     * Marca temporal de última modificación (audit).
-     * - Se actualiza automáticamente en cambios sobre la entidad.
+     * Fecha y hora de la última modificación del registro.
+     * Se actualiza automáticamente en cada cambio de la entidad.
      */
     @UpdateTimestamp
     @Column(name = "fecha_modificacion")
     private LocalDateTime fechaModificacion;
 
-
+    /**
+     * Obtiene el examen asociado a esta cita a través de la disponibilidad.
+     * 
+     * Método de conveniencia que navega por la relación CitaExamen -> Disponibilidad -> Examen
+     * para facilitar el acceso en consultas GraphQL sin exponer directamente la disponibilidad.
+     * 
+     * @return el examen asociado, o null si la disponibilidad no está cargada
+     */
     public Examen getExamen() {
-        // Si la disponibilidad no es nula, navega a través de ella para obtener el examen
         if (this.disponibilidad != null) {
             return this.disponibilidad.getExamen();
         }
         return null;
     }
 
+    /**
+     * Obtiene la sede asociada a esta cita a través de la disponibilidad.
+     * 
+     * Método de conveniencia que navega por la relación CitaExamen -> Disponibilidad -> Sede
+     * para facilitar el acceso en consultas GraphQL sin exponer directamente la disponibilidad.
+     * 
+     * @return la sede asociada, o null si la disponibilidad no está cargada
+     */
     public Sede getSede() {
-        // Si la disponibilidad no es nula, navega a través de ella para obtener la sede
         if (this.disponibilidad != null) {
             return this.disponibilidad.getSede();
         }
