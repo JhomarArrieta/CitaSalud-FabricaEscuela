@@ -93,4 +93,21 @@ public class CitaExamen {
     @Column(name = "fecha_modificacion")
     private LocalDateTime fechaModificacion;
 
+
+    public Examen getExamen() {
+        // Si la disponibilidad no es nula, navega a través de ella para obtener el examen
+        if (this.disponibilidad != null) {
+            return this.disponibilidad.getExamen();
+        }
+        return null;
+    }
+
+    public Sede getSede() {
+        // Si la disponibilidad no es nula, navega a través de ella para obtener la sede
+        if (this.disponibilidad != null) {
+            return this.disponibilidad.getSede();
+        }
+        return null;
+    }
+
 }
