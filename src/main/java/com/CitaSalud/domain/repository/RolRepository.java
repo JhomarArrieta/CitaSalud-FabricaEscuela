@@ -14,6 +14,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
  * - No es necesario anotar con @Repository: Spring Data lo detecta automáticamente.
  * - Mantener las firmas de métodos específicas y documentarlas para evitar ambigüedad en la capa de servicio.
  */
+
 public interface RolRepository extends JpaRepository<Rol, Long> {
     // Spring proporciona: save(), findById(), findAll(), delete(), etc.
 }

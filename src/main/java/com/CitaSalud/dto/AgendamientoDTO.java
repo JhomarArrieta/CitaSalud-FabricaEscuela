@@ -1,56 +1,21 @@
 package com.CitaSalud.dto;
 
+import lombok.Data;
 import java.time.LocalDateTime;
 
-// No necesita anotaciones de Spring o JPA, es solo un contenedor de datos.
+/**
+ * DTO interno usado para transportar los datos de agendamiento
+ * de la capa de Controller a la capa de Service.
+ * * Contiene el 'usuarioId' ya validado y extraído de forma segura
+ * del contexto de Spring Security.
+ */
+@Data
 public class AgendamientoDTO {
 
+    // Este ID es SETEADO por el controlador desde el JWT
     private Long usuarioId;
-    private Integer sedeId;
-    private Integer examenId;
+
+    private Long sedeId;
+    private Long examenId;
     private LocalDateTime fechaHora;
-
-    public AgendamientoDTO() {
-    }
-
-    public AgendamientoDTO(Long usuarioId, Integer sedeId, Integer examenId, LocalDateTime fechaHora) {
-        this.usuarioId = usuarioId;
-        this.sedeId = sedeId;
-        this.examenId = examenId;
-        this.fechaHora = fechaHora;
-    }
-
-    // Getters y Setters.
-
-    public Long getUsuarioId() {
-        return usuarioId;
-    }
-
-    public void setUsuarioId(Long usuarioId) {
-        this.usuarioId = usuarioId;
-    }
-
-    public Integer getSedeId() {
-        return sedeId;
-    }
-
-    public void setSedeId(Integer sedeId) {
-        this.sedeId = sedeId;
-    }
-
-    public Integer getExamenId() {
-        return examenId;
-    }
-
-    public void setExamenId(Integer examenId) {
-        this.examenId = examenId;
-    }
-
-    public LocalDateTime getFechaHora() {
-        return fechaHora;
-    }
-
-    public void setFechaHora(LocalDateTime fechaHora) {
-        this.fechaHora = fechaHora;
-    }
 }
