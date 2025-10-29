@@ -18,6 +18,13 @@ input AgendamientoInput {
     fechaHora: String! # Debe ser un String en formato ISO 8601 (YYYY-MM-DDTHH:MM:SS)
 }
 
+# Input para la mutación de Cancelacion (SEGURO).
+# El usuarioId NO se incluye; se obtiene del token JWT para prevenir suplantación.
+input CancelacionInput {
+    citaId: ID!
+    motivo: String
+}
+
 # --- QUERIES (Consultas) ---
 
 type Query {
@@ -45,6 +52,9 @@ type Mutation {
 
     # Agenda un examen. Protegido con Spring Security (@PreAuthorize).
     agendarExamen(input: AgendamientoInput!): CitaExamen!
+
+    #Cancela una cita. Protegido con Spring Security (@PreAuthorize).
+    cancelarExamen(input: CancelacionInput!): CitaExamen!
 }
 
 # --- TIPOS DE RESPUESTA (Output Types) ---
@@ -77,4 +87,5 @@ type CitaExamen {
     estado: String
     examen: Examen
     sede: Sede
+    motivoCancelacion: String
 }

@@ -5,11 +5,14 @@ import com.CitaSalud.domain.repository.CitaExamenRepository;
 import com.CitaSalud.domain.repository.DisponibilidadRepository;
 import com.CitaSalud.dto.AgendamientoDTO;
 import com.CitaSalud.domain.repository.UsuarioRepository;
+import com.CitaSalud.dto.CancelacionDTO;
 import com.CitaSalud.exceptions.CuposAgotadosException;
 import com.CitaSalud.exceptions.RecursoNoEncontradoException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.CitaSalud.domain.entities.Usuario;
+
+import java.time.LocalDateTime;
 
 
 /**
@@ -93,6 +96,79 @@ public class CitaExamenService {
 
         // Persistir y retornar la cita agendada
         return citaExamenRepository.save(nuevaCita);
+    }
+
+    /**
+     * Cancela un examen médico previamente agendado.
+     *
+     * Proceso:
+     * 1. Valida la existencia de la cita.
+     * 2. Valida que el usuario autenticado (del DTO) sea el dueño de la cita.
+     * 3. Valida que la cita esté en estado "AGENDADA" (o 'pendiente' según tu lógica).
+     * 4. Bloquea la disponibilidad asociada (PESSIMISTIC_WRITE) para liberar el cupo de forma segura.
+     * 5. Libera un cupo en la disponibilidad (decrementa cuposOcupados).
+     * 6. Actualiza el estado de la cita a "CANCELADA" y guarda el motivo.
+     *
+     * @param dto objeto con los datos de cancelación (usuarioId, citaId, motivo)
+     * @return la cita actualizada
+     * @throws RecursoNoEncontradoException si la cita o la disponibilidad no existen
+     * @throws SecurityException (o similar) si el usuario no es dueño de la cita
+     * @throws IllegalStateException (o similar) si la cita no se puede cancelar
+     */
+    @Transactional
+    public CitaExamen cancelarExamen(CancelacionDTO dto) {
+
+        // 1. Encontrar la cita
+        CitaExamen cita = citaExamenRepository.findById(dto.getCitaId())
+                .orElseThrow(() -> new RecursoNoEncontradoException("Cita no encontrada con ID: " + dto.getCitaId()));
+
+        // 2. Validación de Seguridad (CRÍTICA)
+        if (!cita.getUsuario().getIdUsuario().equals(dto.getUsuarioId())) {
+            // Comparamos el dueño de la cita (cita.getUsuario().getId())
+            // con el usuario del token (dto.getUsuarioId())
+            throw new SecurityException("No tiene permiso para cancelar esta cita.");
+        }
+
+        // 3. Validación de Regla de Negocio (basado en la imagen de la DB)
+        // El estado 'pendiente' parece ser el inicial, 'AGENDADA' el confirmado.
+        // Ajusta esta lógica si es necesario.
+        if (!"AGENDADA".equals(cita.getEstado()) && !"pendiente".equals(cita.getEstado())) {
+            throw new IllegalStateException("La cita no puede ser cancelada (estado actual: " + cita.getEstado() + ")");
+        }
+
+        // 4. Obtener la disponibilidad de la cita para bloquearla
+        Disponibilidad dispAsociada = cita.getDisponibilidad();
+        if (dispAsociada == null) {
+            throw new IllegalStateException("Error de datos: La cita no tiene una disponibilidad asociada.");
+        }
+
+        // 5. Bloquear la disponibilidad (reutilizando la lógica de 'agendarExamen')
+        LocalDateTime fechaHoraDeLaCita = cita.getFechaHora();
+        if (fechaHoraDeLaCita == null) {
+            throw new IllegalStateException("Error de datos: La cita no tiene fecha/hora.");
+        }
+
+        // ¡Llamamos al NUEVO método del repositorio!
+        Disponibilidad disponibilidadBloqueada = disponibilidadRepository
+                .findAndLockForUpdate( // <--- CAMBIO DE MÉTODO
+                        dispAsociada.getSede().getId(),
+                        dispAsociada.getExamen().getId(),
+                        fechaHoraDeLaCita.toLocalDate(),
+                        fechaHoraDeLaCita.toLocalTime() // Esto se mapea al param 'horaInicio'
+                )
+                .orElseThrow(() -> new RecursoNoEncontradoException("Error crítico: No se encontró la disponibilidad asociada para liberar el cupo."));
+
+        // 6. Liberar el cupo
+        // (Debes añadir el método 'liberarCupo()' en tu entidad Disponibilidad)
+        disponibilidadBloqueada.liberarCupo();
+        disponibilidadRepository.save(disponibilidadBloqueada);
+
+        // 7. Actualizar la cita (coincide con tu columna 'motivo_cancelacion')
+        cita.setEstado("CANCELADA");
+        cita.setMotivoCancelacion(dto.getMotivo());
+
+        // 8. Persistir y retornar la cita actualizada
+        return citaExamenRepository.save(cita);
     }
 
 }

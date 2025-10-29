@@ -8,6 +8,7 @@ import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
@@ -111,4 +112,16 @@ public interface DisponibilidadRepository extends JpaRepository<Disponibilidad, 
                                                        Long examenId,
                                                        LocalDate fecha,
                                                        LocalTime horaInicio);
+    /*
+     * --- ESTE ES EL MÉTODO NUEVO ---
+     * Se usa para CANCELAR. Simplemente encuentra y bloquea la fila
+     * sin importar cuántos cupos tenga.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT d FROM Disponibilidad d WHERE d.sede.id = :sedeId " +
+            "AND d.examen.id = :examenId AND d.fecha = :fecha AND d.horaInicio = :horaInicio")
+    Optional<Disponibilidad> findAndLockForUpdate(@Param("sedeId") Long sedeId,
+                                                  @Param("examenId") Long examenId,
+                                                  @Param("fecha") LocalDate fecha,
+                                                  @Param("horaInicio") LocalTime horaInicio);
 }

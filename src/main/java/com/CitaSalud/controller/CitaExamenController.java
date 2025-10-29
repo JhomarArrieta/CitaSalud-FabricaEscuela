@@ -4,6 +4,8 @@ import com.CitaSalud.core.services.CitaExamenService;
 import com.CitaSalud.domain.entities.CitaExamen;
 import com.CitaSalud.dto.AgendamientoDTO;
 import com.CitaSalud.dto.AgendamientoInput;
+import com.CitaSalud.dto.CancelacionDTO;
+import com.CitaSalud.dto.CancelacionInput;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -104,5 +106,54 @@ public class CitaExamenController {
 
         // Delegar la operación al servicio responsable y devolver el resultado.
         return citaExamenService.agendarExamen(dto);
+    }
+
+    /**
+     * Mutación GraphQL para cancelar un examen previamente agendado.
+     *
+     * Flujo resumido:
+     * 1. Verificar que el usuario esté autenticado y tenga el rol adecuado.
+     * 2. Obtener el ID del usuario desde el SecurityContext.
+     * 3. Mapear el input a un DTO de servicio (CancelacionDTO).
+     * 4. Llamar al servicio para realizar la cancelación. El servicio validará
+     * que el usuario autenticado sea el dueño de la cita.
+     *
+     * @param input datos de cancelación (ID de la cita y motivo)
+     * @return la entidad CitaExamen actualizada (con estado "CANCELADA")
+     */
+    @MutationMapping
+    @PreAuthorize("hasRole('ROLE_PACIENTE')")
+    public CitaExamen cancelarExamen(
+            @Argument CancelacionInput input
+    ) {
+        // 1. Obtener el ID de usuario autenticado (Lógica de seguridad copiada de agendarExamen)
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || authentication.getPrincipal() == null) {
+            throw new RuntimeException("Acceso denegado: usuario no autenticado.");
+        }
+
+        Long usuarioId;
+        try {
+            Object principal = authentication.getPrincipal();
+            if (principal instanceof String) {
+                usuarioId = Long.parseLong((String) principal);
+            } else if (principal instanceof Long) {
+                usuarioId = (Long) principal;
+            } else {
+                throw new IllegalArgumentException("El principal de seguridad no contiene un ID de usuario válido.");
+            }
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("El ID de usuario contenido en el token no es numérico.", e);
+        }
+
+        // 2. Mapear al DTO de servicio
+        CancelacionDTO dto = new CancelacionDTO();
+        dto.setUsuarioId(usuarioId); // ID seguro del token
+        dto.setCitaId(input.citaId());
+        dto.setMotivo(input.motivo());
+
+        // 3. Delegar la operación al servicio
+        return citaExamenService.cancelarExamen(dto);
     }
 }
