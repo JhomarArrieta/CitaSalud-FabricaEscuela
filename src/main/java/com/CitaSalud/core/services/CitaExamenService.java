@@ -148,7 +148,7 @@ public class CitaExamenService {
             throw new IllegalStateException("Error de datos: La cita no tiene fecha/hora.");
         }
 
-        // ¡Llamamos al NUEVO método del repositorio!
+        // ¡Llamamos al NUEVO método del repositorio
         Disponibilidad disponibilidadBloqueada = disponibilidadRepository
                 .findAndLockForUpdate( // <--- CAMBIO DE MÉTODO
                         dispAsociada.getSede().getId(),
