@@ -24,6 +24,9 @@ jobs:
     # Usamos la última versión estable de Ubuntu como sistema operativo
     runs-on: ubuntu-latest
 
+    env:
+      MAVEN_OPTS: -Dfile.encoding=UTF-8
+
     # Pasos (Steps) que componen el job
     steps:
       # Paso 1: Clonar el repositorio
