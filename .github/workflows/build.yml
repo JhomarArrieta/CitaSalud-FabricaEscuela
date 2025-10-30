@@ -24,9 +24,6 @@ jobs:
     # Usamos la última versión estable de Ubuntu como sistema operativo
     runs-on: ubuntu-latest
 
-    env:
-      MAVEN_OPTS: -Dfile.encoding=UTF-8
-
     # Pasos (Steps) que componen el job
     steps:
       # Paso 1: Clonar el repositorio
@@ -54,7 +51,7 @@ jobs:
         # 'clean' borra builds anteriores.
         # 'verify' compila, ejecuta tests y empaqueta el JAR.
         # '-B' (batch mode) evita logs interactivos.
-        run: mvn -B clean verify
+        run:  mvn -B -Dproject.build.sourceEncoding=UTF-8 -Dproject.reporting.outputEncoding=UTF-8 clean verify
 
       # Paso 4: Subir el artefacto (el .jar)
       # Guarda el archivo .jar generado para que el job de 'deploy' pueda usarlo.
