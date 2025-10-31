@@ -119,9 +119,6 @@ jobs:
           application_name: ${{ secrets.EB_APP_NAME }}
           environment_name: ${{ secrets.EB_ENV_NAME }}
 
-          # Crea una nueva "Versión de Aplicación" con la etiqueta "v-<id-del-commit>"
-          version_label: "v-${{ github.sha }}"
-
           # El archivo que vamos a desplegar (el que descargamos en el Paso 1)
           deployment_package: app.jar
 
