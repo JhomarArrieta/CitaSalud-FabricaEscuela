@@ -53,11 +53,75 @@ jobs:
         # '-B' (batch mode) evita logs interactivos.
         run:  mvn -B -Dproject.build.sourceEncoding=UTF-8 -Dproject.reporting.outputEncoding=UTF-8 clean verify
 
-      # Paso 4: Subir el artefacto (el .jar)
-      # Guarda el archivo .jar generado para que el job de 'deploy' pueda usarlo.
+      # --- NUEVO PASO ---
+      # Paso 4: Renombrar el artefacto
+      # Renombra el JAR a un nombre genérico (app.jar) para que el deploy sea predecible.
+      - name: Rename artifact for deployment
+        run: mv target/*.jar target/app.jar
+
+      # --- MODIFICADO ---
+      # Paso 5: Subir el artefacto (el .jar renombrado)
+      # Guarda el 'app.jar' para que el job de 'deploy' pueda usarlo.
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
         with:
-          # El nombre que le damos a este artefacto
-          name: CITASaludApplication-0.0.1-SNAPSHOT
-          path: target/*.jar
+          # El nombre que le damos a este artefacto (genérico)
+          name: spring-boot-jar
+          # La ruta al archivo exacto que queremos subir
+          path: target/app.jar
+
+  # --- Job 2: Desplegar en AWS Elastic Beanstalk ---
+  # Este job SOLO se ejecuta si 'build-and-test' fue exitoso Y
+  # el evento es un PUSH a 'main' (es decir, una fusión/merge).
+  deploy:
+    # Nombre descriptivo
+    name: Deploy to AWS Elastic Beanstalk
+    # Depende del éxito del job anterior
+    needs: build-and-test
+
+    # Condición de ejecución:
+    # Solo se ejecuta si estamos en la rama 'main' Y el evento fue un 'push'
+    # Esto evita que se despliegue en cada 'pull_request'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    # Usamos ubuntu para el despliegue
+    runs-on: ubuntu-latest
+
+    steps:
+      # Paso 1: Descargar el artefacto (app.jar)
+      # Recupera el 'app.jar' que el job 'build-and-test' subió.
+      - name: Download JAR artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: spring-boot-jar
+          # Lo descarga al directorio actual del runner
+          path: .
+
+      # Paso 2: Configurar las credenciales de AWS
+      # Inicia sesión en AWS de forma segura usando los Secrets de GitHub.
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      # Paso 3: Desplegar en AWS Elastic Beanstalk
+      # Sube el 'app.jar' a Beanstalk, que maneja el despliegue sin tiempo de inactividad.
+      - name: Deploy to Elastic Beanstalk
+        uses: einaregilsson/beanstalk-deploy@v21
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          region: ${{ secrets.AWS_REGION }}
+
+          # Nombres de tu aplicación y entorno en AWS
+          application_name: ${{ secrets.EB_APP_NAME }}
+          environment_name: ${{ secrets.EB_ENV_NAME }}
+
+          # Crea una nueva "Versión de Aplicación" con la etiqueta "v-<id-del-commit>"
+          version_label: "v-${{ github.sha }}"
+
+          # El archivo que vamos a desplegar (el que descargamos en el Paso 1)
+          deployment_package: app.jar
+
