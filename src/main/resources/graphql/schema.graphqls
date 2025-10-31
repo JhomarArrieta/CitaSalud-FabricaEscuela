@@ -1,11 +1,91 @@
-type Mutation {
-    login(email: String!, contrasena: String!): AuthResponse
+# ==============================================================================
+# Definición del Esquema Principal de GraphQL (schema.graphqls)
+# ==============================================================================
+
+# --- INPUTS ---
+
+# Input para la mutación de Autenticación.
+input AuthInput {
+    email: String!
+    contrasena: String!
 }
+
+# Input para la mutación de Agendamiento (SEGURO).
+# El usuarioId NO se incluye; se obtiene del token JWT para prevenir suplantación.
+input AgendamientoInput {
+    sedeId: ID!
+    examenId: ID!
+    fechaHora: String! # Debe ser un String en formato ISO 8601 (YYYY-MM-DDTHH:MM:SS)
+}
+
+# Input para la mutación de Cancelacion (SEGURO).
+# El usuarioId NO se incluye; se obtiene del token JWT para prevenir suplantación.
+input CancelacionInput {
+    citaId: ID!
+    motivo: String
+}
+
+# --- QUERIES (Consultas) ---
+
+type Query {
+    # Placeholder o consulta mínima.
+    _dummy: String
+
+    # Consultas de disponibilidad (Públicas)
+    fechasDisponibles: [String!]!
+
+    # Corregido: sedeId debe ser ID! (Long)
+    sedesDisponibles(fecha: String!): [Sede!]!
+
+    # Corregido: sedeId y tipoExamenId deben ser ID! (Long)
+    tiposExamenDisponibles(fecha: String!, sedeId: ID!): [TipoExamen!]!
+
+    # Corregido: Todos los IDs deben ser ID! (Long)
+    examenesDisponibles(fecha: String!, sedeId: ID!, tipoExamenId: ID!): [Examen!]!
+}
+
+# --- MUTATIONS (Modificaciones de Estado) ---
+
+type Mutation {
+    # Autentica un usuario usando el AuthInput.
+    login(input: AuthInput!): AuthResponse # Corregido para usar el input único
+
+    # Agenda un examen. Protegido con Spring Security (@PreAuthorize).
+    agendarExamen(input: AgendamientoInput!): CitaExamen!
+
+    #Cancela una cita. Protegido con Spring Security (@PreAuthorize).
+    cancelarExamen(input: CancelacionInput!): CitaExamen!
+}
+
+# --- TIPOS DE RESPUESTA (Output Types) ---
 
 type AuthResponse {
     token: String!
 }
 
-type Query {
-    _dummy: String
+type Sede {
+    id: ID!
+    nombre: String
+    direccion: String
+}
+
+type TipoExamen {
+    id: ID!
+    nombre: String
+}
+
+type Examen {
+    id: ID!
+    nombre: String
+    preparacionRequerida: String
+}
+
+type CitaExamen {
+
+    idCita: ID!
+    fechaHora: String
+    estado: String
+    examen: Examen
+    sede: Sede
+    motivoCancelacion: String
 }
