@@ -97,7 +97,7 @@ jobs:
         with:
           # AÑADIMOS LAS LLAVES Y LA REGIÓN DIRECTAMENTE AQUÍ:
           aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_key: ${{ secrets.AWS_SECRET_KEY }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCES_KEY }}
           region: ${{ secrets.AWS_REGION }}
 
           application_name: ${{ secrets.EB_APP_NAME }}
