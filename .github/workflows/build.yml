@@ -91,7 +91,6 @@ jobs:
           name: spring-boot-jar
           path: .
 
-
       # Paso 2: Desplegar en AWS Elastic Beanstalk
       - name: Deploy to Elastic Beanstalk
         uses: einaregilsson/beanstalk-deploy@v21
