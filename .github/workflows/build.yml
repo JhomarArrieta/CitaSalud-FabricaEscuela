@@ -72,6 +72,7 @@ jobs:
 
   # --- Job 2: Desplegar en AWS Elastic Beanstalk ---
   deploy:
+    # INTENTANDO FORZAR EL CAMBIO
     # Nombre descriptivo
     name: Deploy to AWS Elastic Beanstalk
     # Depende del éxito del job anterior
@@ -95,7 +96,6 @@ jobs:
       - name: Deploy to Elastic Beanstalk
         uses: einaregilsson/beanstalk-deploy@v21
         with:
-          # AÑADIMOS LAS LLAVES Y LA REGIÓN DIRECTAMENTE AQUÍ:
           aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_key: ${{ secrets.AWS_SECRET_ACCES_KEY }}
           region: ${{ secrets.AWS_REGION }}
@@ -103,3 +103,4 @@ jobs:
           application_name: ${{ secrets.EB_APP_NAME }}
           environment_name: ${{ secrets.EB_ENV_NAME }}
           deployment_package: app.jar
+          version_label: ''
