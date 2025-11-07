@@ -1,106 +1,56 @@
-# Nombre descriptivo del workflow que aparecerá en la pestaña "Actions" de GitHub
 name: CI/CD Pipeline
 
-# --- Disparadores (Triggers) ---
-# Define cuándo se debe ejecutar este workflow
 on:
-  # Se ejecuta en CUALQUIER push a la rama "main"
   push:
     branches: [ "main" ]
-  # Se ejecuta en CUALQUIER pull request que apunte a la rama "main"
   pull_request:
     branches: [ "main" ]
 
-# --- Trabajos (Jobs) ---
-# Un workflow se compone de uno o más jobs que se ejecutan en paralelo (o secuencialmente)
 jobs:
-
-  # --- Job 1: Construir y Probar (Build & Test) ---
-  # Este job es responsable de compilar el código y ejecutar todos los tests unitarios.
-  # Se ejecuta en Pull Requests y Pushes.
   build-and-test:
-    # El nombre que se mostrará en la UI de GitHub para este job
     name: Build, Test, and Package
-    # Usamos la última versión estable de Ubuntu como sistema operativo
     runs-on: ubuntu-latest
-
-    # Pasos (Steps) que componen el job
     steps:
-      # Paso 1: Clonar el repositorio
-      # Descarga el código fuente de tu repositorio al runner de GitHub
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Paso 2: Configurar el JDK (Java)
-      # Instala la versión de Java que tu proyecto necesita.
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          # Tu pom.xml especifica Java 21, así que lo usamos aquí
           java-version: '17'
-          # Usamos la distribución 'temurin' (antes AdoptOpenJDK), muy estándar
           distribution: 'temurin'
-          # Habilitar el caché de Maven
-          # Esto guarda las dependencias descargadas para acelerar builds futuros
           cache: 'maven'
 
-      # Paso 3: Construir y Probar con Maven
-      # Ejecuta los comandos de Maven para compilar, probar y verificar.
       - name: Build and test with Maven
-        # 'mvn clean verify' es el comando estándar de CI.
-        # 'clean' borra builds anteriores.
-        # 'verify' compila, ejecuta tests y empaqueta el JAR.
-        # '-B' (batch mode) evita logs interactivos.
-        run:  mvn -B -Dproject.build.sourceEncoding=UTF-8 -Dproject.reporting.outputEncoding=UTF-8 clean verify
+        run: mvn -B -Dproject.build.sourceEncoding=UTF-8 -Dproject.reporting.outputEncoding=UTF-8 clean verify
 
-      # --- NUEVO PASO ---
-      # Paso 4: Renombrar el artefacto
-      # Renombra el JAR a un nombre genérico (app.jar) para que el deploy sea predecible.
       - name: Rename artifact for deployment
         run: mv target/*.jar target/app.jar
 
-      # --- MODIFICADO ---
-      # Paso 5: Subir el artefacto (el .jar renombrado)
-      # Guarda el 'app.jar' para que el job de 'deploy' pueda usarlo.
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
         with:
-          # El nombre que le damos a este artefacto (genérico)
           name: spring-boot-jar
-          # La ruta al archivo exacto que queremos subir
           path: target/app.jar
 
-  # --- Job 2: Desplegar en AWS Elastic Beanstalk ---
   deploy:
-    # INTENTANDO FORZAR EL CAMBIO
-    # Nombre descriptivo
     name: Deploy to AWS Elastic Beanstalk
-    # Depende del éxito del job anterior
     needs: build-and-test
-
-    # Condición de ejecución:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-
-    # Usamos ubuntu para el despliegue
     runs-on: ubuntu-latest
-
     steps:
-      # Paso 1: Descargar el artefacto (app.jar)
       - name: Download JAR artifact
         uses: actions/download-artifact@v4
         with:
           name: spring-boot-jar
           path: .
 
-      # Paso 2: Desplegar en AWS Elastic Beanstalk
       - name: Deploy to Elastic Beanstalk
         uses: einaregilsson/beanstalk-deploy@v21
         with:
           aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_key: ${{ secrets.AWS_SECRET_ACCES_KEY }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           region: ${{ secrets.AWS_REGION }}
-
           application_name: ${{ secrets.EB_APP_NAME }}
           environment_name: ${{ secrets.EB_ENV_NAME }}
           deployment_package: app.jar
-          version_label: ''
