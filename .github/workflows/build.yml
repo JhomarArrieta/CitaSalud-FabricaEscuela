@@ -91,21 +91,16 @@ jobs:
           name: spring-boot-jar
           path: .
 
-      # Paso 2: Configurar las credenciales de AWS
-      # ¡ESTE ES EL ÚNICO PASO DE CREDENCIALES QUE NECESITAS!
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
 
-      # Paso 3: Desplegar en AWS Elastic Beanstalk
-      # Ya no está el paso duplicado
+      # Paso 2: Desplegar en AWS Elastic Beanstalk
       - name: Deploy to Elastic Beanstalk
         uses: einaregilsson/beanstalk-deploy@v21
         with:
+          # AÑADIMOS LAS LLAVES Y LA REGIÓN DIRECTAMENTE AQUÍ:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_KEY }}
           region: ${{ secrets.AWS_REGION }}
+
           application_name: ${{ secrets.EB_APP_NAME }}
           environment_name: ${{ secrets.EB_ENV_NAME }}
           deployment_package: app.jar
