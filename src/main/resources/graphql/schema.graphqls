@@ -25,6 +25,16 @@ input CancelacionInput {
     motivo: String
 }
 
+# Input para la mutación de actualizar el perfil del paciente
+input ActualizarPerfilInput {
+    nombre: String
+    apellido: String
+    tipoDocumento: String # Respetando tu entidad
+    numeroDocumento: String
+    telefono: String
+    email: String
+}
+
 # --- QUERIES (Consultas) ---
 
 type Query {
@@ -42,6 +52,11 @@ type Query {
 
     # Corregido: Todos los IDs deben ser ID! (Long)
     examenesDisponibles(fecha: String!, sedeId: ID!, tipoExamenId: ID!): [Examen!]!
+    # Devuelve las citas del usuario autenticado (usa el userId del token)
+    misCitas: [CitaExamen!]!
+
+    # Query de perfil
+    miPerfil: Usuario!
 }
 
 # --- MUTATIONS (Modificaciones de Estado) ---
@@ -55,9 +70,23 @@ type Mutation {
 
     #Cancela una cita. Protegido con Spring Security (@PreAuthorize).
     cancelarExamen(input: CancelacionInput!): CitaExamen!
+
+    # Mutation Actualizar perfil
+    actualizarPerfil(input: ActualizarPerfilInput!): Usuario!
 }
 
 # --- TIPOS DE RESPUESTA (Output Types) ---
+# 1. Se define el Enum que corresponde a EstadoCita.java
+#    Esto permite al frontend saber exactamente qué estados son válidos.
+enum EstadoCita {
+    PENDIENTE,
+    CONFIRMADO,
+    CANCELADO,
+    REQUIERE_DOCUMENTOS,
+    REGISTRADO_EN_SEDE,
+    COMPLETADO,
+    NO_SE_PRESENTO
+}
 
 type AuthResponse {
     token: String!
@@ -84,8 +113,22 @@ type CitaExamen {
 
     idCita: ID!
     fechaHora: String
-    estado: String
+    estado: EstadoCita!
+    fechaModificacion: String!
     examen: Examen
     sede: Sede
     motivoCancelacion: String
+}
+
+type Usuario {
+    idUsuario: ID!
+    nombre: String!
+    apellido: String!
+    tipoDocumento: String!
+    numeroDocumento: String!
+    email: String!
+    telefono: String!
+    fechaNacimiento: String! # Formato ISO 8601 (YYYY-MM-DD)
+    # NO incluir contrasena por seguridad
+    # roles: [Rol!]! # Descomentar si necesitas exponer los roles
 }

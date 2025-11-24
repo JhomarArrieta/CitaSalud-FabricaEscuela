@@ -57,12 +57,15 @@ public class CitaExamen {
     private LocalDateTime fechaHora;
 
     /**
-     * Estado actual de la cita.
-     * Valores posibles: AGENDADA, CANCELADA, FINALIZADA.
-     * Valor por defecto: AGENDADA.
+     * Estado actual de la cita (Agendada, Cancelada, etc.).
+     * ---- MODIFICADO POR LA HISTORIA DE USUARIO ----
+     * Se usa un Enum para estandarizar los estados.
+     * EnumType.STRING guarda el nombre (ej. "CONFIRMED") en la BD,
+     * lo cual es mucho más legible que un número.
      */
-    @Column(name = "estado", length = 20, nullable = false)
-    private String estado = "AGENDADA";
+    @Enumerated(EnumType.STRING)
+    @Column(name = "estado", nullable = false)
+    private EstadoCita estado;
 
     /**
      * Motivo de cancelación de la cita.

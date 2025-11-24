@@ -1,0 +1,23 @@
+# Example application properties - do NOT commit real secrets to source control.
+# Copy this file to `application.properties` or prefer using environment variables.
+
+spring.application.name=CitaSaludApplication
+server.port=8080
+
+# Example PostgreSQL connection (replace with your DB URL)
+spring.datasource.url=jdbc:postgresql://<HOST>:<PORT>/<DB>?sslmode=require
+spring.datasource.username=<DB_USERNAME>
+spring.datasource.password=<DB_PASSWORD>
+spring.datasource.driver-class-name=org.postgresql.Driver
+
+# JPA / Hibernate
+spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+
+# JWT: provide APP_JWTSECRET via environment variable in production
+app.jwtSecret=<BASE64_OR_SECRET>
+app.jwtExpirationInMs=1800000
+
+spring.graphql.graphiql.enabled=true

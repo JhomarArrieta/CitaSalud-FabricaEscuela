@@ -26,4 +26,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface CitaExamenRepository extends JpaRepository<CitaExamen, Long> {
 
+	// Devuelve las citas asociadas a un usuario por su id (id_usuario)
+	java.util.List<CitaExamen> findByUsuario_IdUsuario(Long idUsuario);
+
 }
