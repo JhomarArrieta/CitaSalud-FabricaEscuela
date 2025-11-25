@@ -9,18 +9,18 @@ import java.time.LocalDateTime;
 
 /**
  * Entidad JPA que representa una cita médica agendada por un usuario.
- * 
+ *
  * Mapea la tabla "cita_examen" y almacena información sobre:
  * - Usuario que agenda la cita
  * - Disponibilidad (franja horaria) reservada
  * - Fecha y hora específica de la cita
  * - Estado actual y motivo de cancelación (si aplica)
  * - Auditoría de creación y modificación
- * 
+ *
  * Relaciones:
  * - ManyToOne con Usuario: múltiples citas pueden pertenecer a un usuario
  * - ManyToOne con Disponibilidad: múltiples citas pueden compartir una franja horaria
- * 
+ *
  * Se utiliza FetchType.LAZY en las relaciones para optimizar el rendimiento,
  * cargando entidades relacionadas solo cuando se acceden explícitamente.
  */
@@ -57,12 +57,15 @@ public class CitaExamen {
     private LocalDateTime fechaHora;
 
     /**
-     * Estado actual de la cita.
-     * Valores posibles: AGENDADA, CANCELADA, FINALIZADA.
-     * Valor por defecto: AGENDADA.
+     * Estado actual de la cita (Agendada, Cancelada, etc.).
+     * ---- MODIFICADO POR LA HISTORIA DE USUARIO ----
+     * Se usa un Enum para estandarizar los estados.
+     * EnumType.STRING guarda el nombre (ej. "CONFIRMED") en la BD,
+     * lo cual es mucho más legible que un número.
      */
-    @Column(name = "estado", length = 20, nullable = false)
-    private String estado = "AGENDADA";
+    @Enumerated(EnumType.STRING)
+    @Column(name = "estado", nullable = false)
+    private EstadoCita estado;
 
     /**
      * Motivo de cancelación de la cita.
@@ -90,10 +93,10 @@ public class CitaExamen {
 
     /**
      * Obtiene el examen asociado a esta cita a través de la disponibilidad.
-     * 
+     *
      * Método de conveniencia que navega por la relación CitaExamen -> Disponibilidad -> Examen
      * para facilitar el acceso en consultas GraphQL sin exponer directamente la disponibilidad.
-     * 
+     *
      * @return el examen asociado, o null si la disponibilidad no está cargada
      */
     public Examen getExamen() {
@@ -105,10 +108,10 @@ public class CitaExamen {
 
     /**
      * Obtiene la sede asociada a esta cita a través de la disponibilidad.
-     * 
+     *
      * Método de conveniencia que navega por la relación CitaExamen -> Disponibilidad -> Sede
      * para facilitar el acceso en consultas GraphQL sin exponer directamente la disponibilidad.
-     * 
+     *
      * @return la sede asociada, o null si la disponibilidad no está cargada
      */
     public Sede getSede() {

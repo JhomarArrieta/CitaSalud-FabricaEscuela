@@ -8,12 +8,14 @@ import com.CitaSalud.dto.CancelacionDTO;
 import com.CitaSalud.dto.CancelacionInput;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
+import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Controlador GraphQL encargado de las operaciones relacionadas con citas de examen.
@@ -155,5 +157,35 @@ public class CitaExamenController {
 
         // 3. Delegar la operación al servicio
         return citaExamenService.cancelarExamen(dto);
+    }
+
+    /**
+     * Query para obtener las citas del usuario autenticado.
+     * @return lista de CitaExamen
+     */
+    @QueryMapping
+    @PreAuthorize("hasRole('ROLE_PACIENTE')")
+    public List<CitaExamen> misCitas() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || authentication.getPrincipal() == null) {
+            throw new RuntimeException("Acceso denegado: usuario no autenticado.");
+        }
+
+        Long usuarioId;
+        try {
+            Object principal = authentication.getPrincipal();
+            if (principal instanceof String) {
+                usuarioId = Long.parseLong((String) principal);
+            } else if (principal instanceof Long) {
+                usuarioId = (Long) principal;
+            } else {
+                throw new IllegalArgumentException("El principal de seguridad no contiene un ID de usuario válido.");
+            }
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("El ID de usuario contenido en el token no es numérico.", e);
+        }
+
+        return citaExamenService.obtenerCitasPorUsuario(usuarioId);
     }
 }
