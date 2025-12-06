@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository;
 
 /**
  * Repositorio Spring Data JPA para la gestión de citas de exámenes médicos.
- * 
+ *
  * Proporciona operaciones CRUD sobre la entidad CitaExamen, incluyendo:
  * - save(): crear o actualizar una cita
  * - findById(): buscar cita por su identificador
@@ -14,10 +14,10 @@ import org.springframework.stereotype.Repository;
  * - delete(): eliminar una cita
  * - count(): contar citas existentes
  * - existsById(): verificar existencia de una cita
- * 
+ *
  * Spring Data JPA genera automáticamente las implementaciones de estos métodos
  * basándose en la interfaz JpaRepository.
- * 
+ *
  * Este repositorio es utilizado principalmente por CitaExamenService para:
  * - Persistir nuevas citas agendadas
  * - Consultar citas existentes por usuario
