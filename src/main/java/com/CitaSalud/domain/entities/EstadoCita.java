@@ -15,9 +15,9 @@ package com.CitaSalud.domain.entities;
  * - NO_SE_PRESENTO: El paciente no se presentó.
  */
 public enum EstadoCita {
-    PENDIENTE,
+    AGENDADA,
     CONFIRMADO,
-    CANCELADO,
+    CANCELADA,
     REQUIERE_DOCUMENTOS,
     REGISTRADO_EN_SEDE,
     COMPLETADO,
