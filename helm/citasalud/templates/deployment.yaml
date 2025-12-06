@@ -13,16 +13,9 @@ spec:
     metadata:
       labels:
         app: {{ .Chart.Name }}
-      annotations:
-        # Esto fuerza reinicio si cambian los metrics (Ãºtil para Prometheus)
-        prometheus.io/scrape: "true"
-        prometheus.io/path: "/actuator/prometheus"
-        prometheus.io/port: "8080"
     spec:
       securityContext:
-        runAsUser: 1000 # Seguridad: No correr como root
-        runAsGroup: 1000
-        fsGroup: 1000
+        runAsUser: 1000
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -31,18 +24,33 @@ spec:
             - name: http
               containerPort: 8080
               protocol: TCP
-          # VARIABLES DE ENTORNO
           env:
-            - name: SPRING_DATASOURCE_URL       # Nombre nativo de Spring
-                value: {{ .Values.env.dbUrl }}
-                  - name: SPRING_DATASOURCE_USERNAME  # Nombre nativo de Spring
-                    value: {{ .Values.env.dbUser }}
-                  - name: SPRING_DATASOURCE_PASSWORD  # Nombre nativo de Spring
-                    valueFrom:
-                      secretKeyRef:
-                        name: citasalud-db-secret
-                        key: password
-                  # Esto ayuda a ver errores de SQL si los hay
-                  - name: SPRING_JPA_SHOW_SQL
-                    value: "true"
-          # HEALTH CHECKS (VITAL para K8s)
+            # Inyección directa de variables de Spring Boot (Fuerza Bruta)
+            - name: SPRING_DATASOURCE_URL
+              value: {{ .Values.env.dbUrl }}
+            - name: SPRING_DATASOURCE_USERNAME
+              value: {{ .Values.env.dbUser }}
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: citasalud-db-secret
+                  key: password
+            - name: SPRING_JPA_SHOW_SQL
+              value: "true"
+          # -------------------------------------------------------
+          # PROBES DESACTIVADOS TEMPORALMENTE PARA DIAGNÓSTICO
+          # -------------------------------------------------------
+          # livenessProbe:
+          #   httpGet:
+          #     path: /actuator/health/liveness
+          #     port: http
+          #   initialDelaySeconds: 180
+          #   periodSeconds: 10
+          # readinessProbe:
+          #   httpGet:
+          #     path: /actuator/health/readiness
+          #     port: http
+          #   initialDelaySeconds: 60
+          #   periodSeconds: 10
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
