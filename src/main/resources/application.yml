@@ -1,0 +1,48 @@
+spring:
+  application:
+    name: citasalud-backend
+
+  # Configuración de Base de Datos (Inyectada por K8s)
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/postgres}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:password}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      # OPTIMIZACIÓN NEON: Pool pequeño para no saturar conexiones serverless
+      maximum-pool-size: 5
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+
+  # Configuración JPA
+  jpa:
+    open-in-view: false # Best practice: false para evitar queries lentas en la vista
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        # Neon requiere SSL, asegurar compatibilidad
+        jdbc:
+          lob:
+            non_contextual_creation: true
+    hibernate:
+      ddl-auto: validate # En producción usa 'validate' o 'none', nunca 'update'
+
+# Configuración de Observabilidad
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, prometheus, info, metrics
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true # Habilita Liveness y Readiness probes nativos
+    prometheus:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
