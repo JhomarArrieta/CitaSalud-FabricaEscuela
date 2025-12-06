@@ -131,7 +131,7 @@ public class CitaExamenService {
 
         // ---- MODIFICADO POR LA HISTORIA DE USUARIO ----
         // 3. Validar estado (no se puede cancelar una cita ya cancelada o completada)
-        if (cita.getEstado() == EstadoCita.CANCELADA || cita.getEstado() == EstadoCita.COMPLETADO) {
+        if (cita.getEstado() == EstadoCita.CANCELADO || cita.getEstado() == EstadoCita.COMPLETADO) {
             throw new IllegalStateException("La cita ya está en un estado final (Cancelada o Completada) y no puede modificarse.");
         }
 
@@ -163,7 +163,7 @@ public class CitaExamenService {
         disponibilidadRepository.save(disponibilidadBloqueada);
 
         // 7. Actualizar la cita (coincide con tu columna 'motivo_cancelacion')
-        cita.setEstado(EstadoCita.CANCELADA);
+        cita.setEstado(EstadoCita.CANCELADO);
         cita.setMotivoCancelacion(dto.getMotivo());
 
         // 8. Persistir y retornar la cita actualizada

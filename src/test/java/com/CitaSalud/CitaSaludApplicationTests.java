@@ -198,7 +198,7 @@ class CitaSaludApplicationTests { // Nombre de la clase del archivo del usuario
 
         // --- CORRECCIÓN DE TEST (Historia de Usuario) ---
         // Verificar que se llamó a setEstado con el Enum
-        verify(citaExistente, times(1)).setEstado(EstadoCita.CANCELADA);
+        verify(citaExistente, times(1)).setEstado(EstadoCita.CANCELADO);
         // ===================================================
 
         verify(citaExistente, times(1)).setMotivoCancelacion("Motivo de prueba");
