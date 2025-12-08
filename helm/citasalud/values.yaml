@@ -1,0 +1,35 @@
+# Configuración de Réplicas (Alta disponibilidad)
+replicaCount: 2
+
+image:
+  repository: citasalud
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+# Configuración del Servicio (Networking interno)
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+# Recursos (Requests = Mínimo garantizado, Limits = Techo)
+resources:
+  requests:
+    memory: "512Mi" # JVM necesita memoria garantizada
+    cpu: "250m"
+  limits:
+    memory: "1Gi"   # Si pasa de esto, K8s reinicia el pod
+    cpu: "1000m"
+
+# Variables de entorno no sensibles (La URL de Neon)
+env:
+  # Reemplaza con tu host de Neon real
+  dbUrl: "jdbc:postgresql://localhost:5432/postgres"
+  dbUser: "postgres"
+
+# Configuración de Monitoreo
+serviceMonitor:
+  enabled: true
+  # La etiqueta 'release' debe coincidir con tu instalación de Prometheus Operator
+  # Usualmente es 'prometheus' o 'kube-prometheus-stack'
+  releaseLabel: prometheus

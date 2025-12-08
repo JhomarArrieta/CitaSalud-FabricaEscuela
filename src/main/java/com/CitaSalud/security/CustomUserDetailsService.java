@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
  *
  * Observaciones de diseño:
  * - La contraseña retornada debe estar en formato hash (BCrypt u otro) tal como se almacena en la entidad.
- * - Se utiliza la implementación estándar {@link org.springframework.security.core.userdetails.User}
+ * - Se utiliza la implementación estándar {@link User}
  *   para facilitar la integración con los mecanismos de autenticación de Spring.
  * - Si la carga de roles fuera costosa o su cardinalidad alta, considerar estrategias LAZY o caché.
  */

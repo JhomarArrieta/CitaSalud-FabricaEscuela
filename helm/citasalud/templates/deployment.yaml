@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+  labels:
+    app: {{ .Chart.Name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+    spec:
+      securityContext:
+        runAsUser: 1000
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+            # Inyección directa de variables de Spring Boot (Fuerza Bruta)
+            - name: SPRING_DATASOURCE_URL
+              value: {{ .Values.env.dbUrl }}
+            - name: SPRING_DATASOURCE_USERNAME
+              value: {{ .Values.env.dbUser }}
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: citasalud-db-secret
+                  key: password
+            - name: SPRING_JPA_SHOW_SQL
+              value: "true"
+          # -------------------------------------------------------
+          # PROBES DESACTIVADOS TEMPORALMENTE PARA DIAGNÓSTICO
+          # -------------------------------------------------------
+          # livenessProbe:
+          #   httpGet:
+          #     path: /actuator/health/liveness
+          #     port: http
+          #   initialDelaySeconds: 180
+          #   periodSeconds: 10
+          # readinessProbe:
+          #   httpGet:
+          #     path: /actuator/health/readiness
+          #     port: http
+          #   initialDelaySeconds: 60
+          #   periodSeconds: 10
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

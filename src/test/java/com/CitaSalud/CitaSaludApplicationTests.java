@@ -196,10 +196,25 @@ class CitaSaludApplicationTests {
         CitaExamen citaCancelada = citaExamenService.cancelarExamen(cancelacionDTO);
 
         // 3. Assert
+<<<<<<< HEAD
         assertNotNull(citaCancelada);
         verify(citaExistente).setEstado(EstadoCita.CANCELADA);
         verify(disponibilidadPrueba).liberarCupo();
         verify(disponibilidadRepository).save(disponibilidadPrueba); // Verifica que se guardó la disponibilidad
+=======
+        // ===================================================
+        assertNotNull(citaCancelada, "La cita cancelada no debe ser null");
+
+        // --- CORRECCIÓN DE TEST (Historia de Usuario) ---
+        // Verificar que se llamó a setEstado con el Enum
+        verify(citaExistente, times(1)).setEstado(EstadoCita.CANCELADO);
+        // ===================================================
+
+        verify(citaExistente, times(1)).setMotivoCancelacion("Motivo de prueba");
+        verify(disponibilidadPrueba, times(1)).liberarCupo();
+        verify(disponibilidadRepository, times(1)).save(disponibilidadPrueba);
+        verify(citaExamenRepository, times(1)).save(citaExistente);
+>>>>>>> origin/main
     }
 
     @Test

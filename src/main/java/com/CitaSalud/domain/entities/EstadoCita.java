@@ -17,7 +17,7 @@ package com.CitaSalud.domain.entities;
 public enum EstadoCita {
     AGENDADA,
     CONFIRMADO,
-    CANCELADA,
+    CANCELADO,
     REQUIERE_DOCUMENTOS,
     REGISTRADO_EN_SEDE,
     COMPLETADO,
